@@ -5,7 +5,6 @@ using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
-using ManagedWinapi.Hooks;
 using ManagedWinapi.Windows;
 using Microsoft.Win32;
 using Ninjacrab.PersistentWindows.Common.Diagnostics;
@@ -14,14 +13,13 @@ using Ninjacrab.PersistentWindows.Common.WinApiBridge;
 
 namespace Ninjacrab.PersistentWindows.Common
 {
-    public class PersistentWindowProcessor : IDisposable
+    public class PersistentWindowProcessor
     {
         private const double NATIVE_DPI = 96.0;
 
         // read and update this from a config file eventually
         private int AppsMovedThreshold = 4;
         private DesktopDisplayMetrics lastMetrics = null;
-        private Hook windowProcHook;
 
         public void Start()
         {
@@ -395,14 +393,6 @@ namespace Ninjacrab.PersistentWindows.Common
                             success);
                     }
                 }
-            }
-        }
-
-        public void Dispose()
-        {
-            if (windowProcHook != null)
-            {
-                windowProcHook.Dispose();
             }
         }
     }
