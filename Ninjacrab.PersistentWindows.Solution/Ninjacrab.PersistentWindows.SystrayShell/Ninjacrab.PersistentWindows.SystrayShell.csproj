@@ -120,10 +120,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\packages\ManagedWinapi.0.3\ManagedWinapiNativeHelper.dll">
-      <Link>ManagedWinapiNativeHelper.dll</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Resource Include="..\Resources\Oxygen-Icons.org-Oxygen-Status-media-playlist-repeat.ico">
       <Link>Oxygen-Icons.org-Oxygen-Status-media-playlist-repeat.ico</Link>
     </Resource>

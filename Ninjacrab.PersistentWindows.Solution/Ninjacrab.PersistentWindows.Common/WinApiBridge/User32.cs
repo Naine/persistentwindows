@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using ManagedWinapi.Windows;
 
 namespace Ninjacrab.PersistentWindows.Common.WinApiBridge
 {
