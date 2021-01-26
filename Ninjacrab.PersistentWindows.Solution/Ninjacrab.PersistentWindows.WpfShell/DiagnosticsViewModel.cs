@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel;
-using Microsoft.Practices.Prism.Mvvm;
+using Prism.Mvvm;
 
 namespace Ninjacrab.PersistentWindows.WpfShell
 {

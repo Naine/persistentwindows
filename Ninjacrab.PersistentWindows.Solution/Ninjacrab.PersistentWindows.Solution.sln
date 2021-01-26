@@ -1,13 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2042
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ninjacrab.PersistentWindows.WpfShell", "Ninjacrab.PersistentWindows.WpfShell\Ninjacrab.PersistentWindows.WpfShell.csproj", "{4EA12EC8-B50F-4DEA-AA7D-85A5F4C81F83}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ninjacrab.PersistentWindows.WpfShell", "Ninjacrab.PersistentWindows.WpfShell\Ninjacrab.PersistentWindows.WpfShell.csproj", "{4EA12EC8-B50F-4DEA-AA7D-85A5F4C81F83}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ninjacrab.PersistentWindows.Common", "Ninjacrab.PersistentWindows.Common\Ninjacrab.PersistentWindows.Common.csproj", "{4CC8B3FB-214B-42AB-8AAE-E7DC5E266EF0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ninjacrab.PersistentWindows.Common", "Ninjacrab.PersistentWindows.Common\Ninjacrab.PersistentWindows.Common.csproj", "{4CC8B3FB-214B-42AB-8AAE-E7DC5E266EF0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ninjacrab.PersistentWindows.SystrayShell", "Ninjacrab.PersistentWindows.SystrayShell\Ninjacrab.PersistentWindows.SystrayShell.csproj", "{A728279C-F567-4E54-8BC6-90A66DC3EF57}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ninjacrab.PersistentWindows.SystrayShell", "Ninjacrab.PersistentWindows.SystrayShell\Ninjacrab.PersistentWindows.SystrayShell.csproj", "{A728279C-F567-4E54-8BC6-90A66DC3EF57}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5273FDA0-216E-4858-A01B-E916193AF96E}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+		global.json = global.json
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
