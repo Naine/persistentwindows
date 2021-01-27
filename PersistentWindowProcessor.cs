@@ -6,18 +6,18 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.Win32;
-using Ninjacrab.PersistentWindows.Common.Diagnostics;
-using Ninjacrab.PersistentWindows.Common.Models;
-using Ninjacrab.PersistentWindows.Common.WinApiBridge;
+using Ninjacrab.PersistentWindows.Diagnostics;
+using Ninjacrab.PersistentWindows.Models;
+using Ninjacrab.PersistentWindows.WinApiBridge;
 
-namespace Ninjacrab.PersistentWindows.Common
+namespace Ninjacrab.PersistentWindows
 {
     public class PersistentWindowProcessor
     {
         private const double NATIVE_DPI = 96.0;
 
         // read and update this from a config file eventually
-        private int AppsMovedThreshold = 4;
+        private const int AppsMovedThreshold = 4;
         private DesktopDisplayMetrics? lastMetrics = null;
 
         public void Start()
@@ -50,132 +50,6 @@ namespace Ninjacrab.PersistentWindows.Common
                         break;
                 }
             };
-
-            //windowProcHook = new Hook();
-            //windowProcHook.Type = HookType.WH_CALLWNDPROC;
-            //windowProcHook.Callback += GlobalWindowProcCallback;
-            //windowProcHook.StartHook();
-        }
-
-        int GlobalWindowProcCallback(int code, IntPtr wParam, IntPtr lParam, ref bool callNext)
-        {
-            CallWindowProcedureParam callbackParam = Marshal.PtrToStructure<CallWindowProcedureParam>(lParam);
-            switch(callbackParam.message)
-            {
-                case WindowsMessage.WINDOWPOSCHANGED:
-                    WindowPositionChangedHandler(callbackParam);
-                    break;
-
-                case WindowsMessage.POWERBROADCAST:
-                    Log.Info("Power Broadcast - {0}    {1}", wParam, lParam);
-                    break;
-
-                case WindowsMessage.ACTIVATE:
-                case WindowsMessage.ACTIVATEAPP:
-                case WindowsMessage.CAPTURECHANGED:
-                case WindowsMessage.ENTERSIZEMOVE:
-                case WindowsMessage.ERASEBKGND:
-                case WindowsMessage.EXITSIZEMOVE:
-                case WindowsMessage.GETTEXT:
-                case WindowsMessage.GETICON:
-                case WindowsMessage.GETMINMAXINFO:
-                case WindowsMessage.HSHELL_ACTIVATESHELLWINDOW:
-                case WindowsMessage.IME_NOTIFY:
-                case WindowsMessage.IME_SETCONTEXT:
-                case WindowsMessage.KILLFOCUS:
-                case WindowsMessage.MOVING:
-                case WindowsMessage.NCACTIVATE:
-                case WindowsMessage.NCCALCSIZE:
-                case WindowsMessage.NCHITTEST:
-                case WindowsMessage.NCPAINT:
-                case WindowsMessage.NULL:
-                case WindowsMessage.SETCURSOR:
-                case WindowsMessage.SIZING:
-                case WindowsMessage.SIZE:
-                case WindowsMessage.WININICHANGE:
-                case WindowsMessage.WINDOWPOSCHANGING:
-                    break;
-
-                default:
-                    int enumValue = (int)callbackParam.message;
-                    switch(enumValue)
-                    {
-                        case 647:
-                        case 49666: 
-                            break;
-
-                        default:
-                            Log.Info(callbackParam.message.ToString());
-                            break;
-                    }
-                    break;
-            }
-            callNext = true;
-            return 0;
-        }
-
-        /// <summary>
-        /// OMG this method is awful!!! but yagni
-        /// </summary>
-        /// <param name="callbackParam"></param>
-        private void WindowPositionChangedHandler(CallWindowProcedureParam callbackParam)
-        {
-            ApplicationDisplayMetrics? appMetrics = null;
-            if (monitorApplications == null ||
-                !monitorApplications.ContainsKey(lastMetrics!.Key))
-            {
-                Log.Error("No definitions found for this resolution: {0}", lastMetrics!.Key);
-                return;
-            }
-
-            appMetrics = monitorApplications[lastMetrics.Key]
-                .FirstOrDefault(row => row.Value.HWnd == callbackParam.hwnd)
-                .Value;
-
-            if (appMetrics == null)
-            {
-                var newAppWindow = SystemWindow.AllToplevelWindows
-                    .FirstOrDefault(row => row.Parent.HWnd.ToInt64() == 0 
-                        && !string.IsNullOrEmpty(row.Title) 
-                        && !row.Title.Equals("Program Manager")
-                        && row.Visible
-                        && row.HWnd == callbackParam.hwnd);
-
-                if (newAppWindow == null)
-                {
-                    Log.Error("Can't find hwnd {0}", callbackParam.hwnd.ToInt64());
-                    return;
-                }
-                ApplicationDisplayMetrics? applicationDisplayMetric = null;
-                AddOrUpdateWindow(lastMetrics.Key, newAppWindow, out applicationDisplayMetric);
-                return;
-            }
-
-            WindowPlacement windowPlacement = appMetrics.WindowPlacement;
-            WindowsPosition newPosition = Marshal.PtrToStructure<WindowsPosition>(callbackParam.lparam);
-            windowPlacement.NormalPosition.Left = newPosition.Left;
-            windowPlacement.NormalPosition.Top = newPosition.Top;
-            windowPlacement.NormalPosition.Right = newPosition.Left + newPosition.Width;
-            windowPlacement.NormalPosition.Bottom = newPosition.Top + newPosition.Height;
-
-            var key = appMetrics.Key;
-            if (monitorApplications[lastMetrics.Key].ContainsKey(key))
-            {
-                monitorApplications[lastMetrics.Key][appMetrics.Key].WindowPlacement = windowPlacement;
-            }
-            else
-            {
-                Log.Error("Hwnd {0} is not in list, we should capture", callbackParam.hwnd.ToInt64());
-                return;
-            }
-
-            Log.Info("WPCH - Capturing {0} at [{1}x{2}] size [{3}x{4}]",
-                appMetrics,
-                appMetrics.WindowPlacement.NormalPosition.Left,
-                appMetrics.WindowPlacement.NormalPosition.Top,
-                appMetrics.WindowPlacement.NormalPosition.Width,
-                appMetrics.WindowPlacement.NormalPosition.Height
-                );
         }
 
         private readonly Dictionary<string, SortedDictionary<string, ApplicationDisplayMetrics>> monitorApplications = new Dictionary<string, SortedDictionary<string, ApplicationDisplayMetrics>>();
@@ -309,11 +183,8 @@ namespace Ninjacrab.PersistentWindows.Common
             };
 
             bool updated = false;
-            if (!monitorApplications[displayKey].ContainsKey(applicationDisplayMetric.Key))
-            {
-                updated = true;
-            }
-            else if (!monitorApplications[displayKey][applicationDisplayMetric.Key].EqualPlacement(applicationDisplayMetric))
+            if (!monitorApplications[displayKey].TryGetValue(applicationDisplayMetric.Key, out var value)
+                || !value.EqualPlacement(applicationDisplayMetric))
             {
                 updated = true;
             }
@@ -360,7 +231,7 @@ namespace Ninjacrab.PersistentWindows.Common
                 Log.Info("Restoring applications for {0}", displayKey);
                 foreach (var window in CaptureWindowsOfInterest())
                 {
-                    string applicationKey = string.Format("{0}", window.HWnd.ToInt64());
+                    string applicationKey = window.HWnd.ToInt64().ToString();
                     if (monitorApplications[displayKey].ContainsKey(applicationKey))
                     {
                         // looks like the window is still here for us to restore

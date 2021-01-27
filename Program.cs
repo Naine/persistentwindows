@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
-using Ninjacrab.PersistentWindows.Common;
 
-namespace Ninjacrab.PersistentWindows.SystrayShell
+namespace Ninjacrab.PersistentWindows
 {
     static class Program
     {

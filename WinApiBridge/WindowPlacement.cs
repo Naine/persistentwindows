@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace Ninjacrab.PersistentWindows.Common.WinApiBridge
+namespace Ninjacrab.PersistentWindows.WinApiBridge
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct WindowPlacement
@@ -37,18 +37,5 @@ namespace Ninjacrab.PersistentWindows.Common.WinApiBridge
         /// The window's coordinates when the window is in the restored position.
         /// </summary>
         public RECT NormalPosition;
-
-        /// <summary>
-        /// Gets the default (empty) value.
-        /// </summary>
-        public static WindowPlacement Default
-        {
-            get
-            {
-                WindowPlacement result = new WindowPlacement();
-                result.Length = Marshal.SizeOf(result);
-                return result;
-            }
-        }
     }
 }

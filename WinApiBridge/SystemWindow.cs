@@ -5,7 +5,7 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Ninjacrab.PersistentWindows.Common.WinApiBridge
+namespace Ninjacrab.PersistentWindows.WinApiBridge
 {
     public class SystemWindow
     {

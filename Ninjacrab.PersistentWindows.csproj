@@ -15,10 +15,4 @@
     <PackageReference Include="NLog" Version="4.7.7" />
     <PackageReference Include="Prism.Core" Version="8.0.0.1909" />
   </ItemGroup>
-  <ItemGroup>
-    <None Remove="icon.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="icon.ico" />
-  </ItemGroup>
 </Project>

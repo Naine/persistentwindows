@@ -1,7 +1,7 @@
 ﻿using System;
-using Ninjacrab.PersistentWindows.Common.WinApiBridge;
+using Ninjacrab.PersistentWindows.WinApiBridge;
 
-namespace Ninjacrab.PersistentWindows.Common.Models
+namespace Ninjacrab.PersistentWindows.Models
 {
     public class ApplicationDisplayMetrics
     {
@@ -17,9 +17,7 @@ namespace Ninjacrab.PersistentWindows.Common.Models
         }
 
         public string Key
-        {
-            get { return string.Format("{0}", HWnd.ToInt64()); }
-        }
+            => $"{HWnd.ToInt64()}";
 
         public bool EqualPlacement(ApplicationDisplayMetrics other)
         {
@@ -30,8 +28,6 @@ namespace Ninjacrab.PersistentWindows.Common.Models
         }
 
         public override string ToString()
-        {
-            return string.Format("{0}.{1} {2}", ProcessId, HWnd.ToInt64(), ApplicationName);
-        }
+            => $"{ProcessId}.{HWnd.ToInt64()} {ApplicationName}";
     }
 }

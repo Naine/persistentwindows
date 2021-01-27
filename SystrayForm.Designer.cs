@@ -1,4 +1,4 @@
-﻿namespace Ninjacrab.PersistentWindows.SystrayShell
+﻿namespace Ninjacrab.PersistentWindows
 {
     partial class SystrayForm
     {

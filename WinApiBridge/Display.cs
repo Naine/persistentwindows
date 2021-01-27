@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Ninjacrab.PersistentWindows.Common.WinApiBridge
+namespace Ninjacrab.PersistentWindows.WinApiBridge
 {
     public class Display
     {
