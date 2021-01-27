@@ -17,8 +17,7 @@ namespace Ninjacrab.PersistentWindows.SystrayShell
 
             var persistentWindowProcessor = new PersistentWindowProcessor();
             persistentWindowProcessor.Start();
-            new SystrayForm(persistentWindowProcessor);
-            Application.Run();
+            Application.Run(new SystrayForm(persistentWindowProcessor));
         }
     }
 }
