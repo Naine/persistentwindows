@@ -3,7 +3,6 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <UseWPF>true</UseWPF>
     <AssemblyName>PersistentWindows</AssemblyName>
     <Version>1.0.7</Version>
     <ApplicationIcon>..\Resources\Oxygen-Icons.org-Oxygen-Status-media-playlist-repeat.ico</ApplicationIcon>
@@ -11,7 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ninjacrab.PersistentWindows.Common\Ninjacrab.PersistentWindows.Common.csproj" />
-    <ProjectReference Include="..\Ninjacrab.PersistentWindows.WpfShell\Ninjacrab.PersistentWindows.WpfShell.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="..\Resources\Oxygen-Icons.org-Oxygen-Status-media-playlist-repeat.ico">
