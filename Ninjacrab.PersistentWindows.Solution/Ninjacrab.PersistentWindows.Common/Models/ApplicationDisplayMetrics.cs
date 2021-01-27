@@ -10,6 +10,12 @@ namespace Ninjacrab.PersistentWindows.Common.Models
         public string ApplicationName { get; set; }
         public WindowPlacement WindowPlacement { get; set; }
 
+        public ApplicationDisplayMetrics(int id, string name)
+        {
+            ProcessId = id;
+            ApplicationName = name;
+        }
+
         public string Key
         {
             get { return string.Format("{0}", HWnd.ToInt64()); }

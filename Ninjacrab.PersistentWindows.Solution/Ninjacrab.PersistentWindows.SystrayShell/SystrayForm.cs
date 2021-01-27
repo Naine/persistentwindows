@@ -7,7 +7,7 @@ namespace Ninjacrab.PersistentWindows.SystrayShell
 {
     public partial class SystrayForm : Form
     {
-        public MainWindow MainView { get; set; }
+        public MainWindow? MainView { get; set; }
 
         private PersistentWindowProcessor m_persistentWindowProcessor;
 

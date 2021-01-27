@@ -7,7 +7,8 @@ namespace Ninjacrab.PersistentWindows.WpfShell
     {
         public DiagnosticsViewModel()
         {
-            EventLog = new BindingList<string>();
+            allProcesses = new BindingList<string>();
+            RaisePropertyChanged(nameof(EventLog));
         }
 
         public const string AllProcessesPropertyName = "AllProcesses";

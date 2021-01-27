@@ -18,7 +18,7 @@ namespace Ninjacrab.PersistentWindows.Common
 
         // read and update this from a config file eventually
         private int AppsMovedThreshold = 4;
-        private DesktopDisplayMetrics lastMetrics = null;
+        private DesktopDisplayMetrics? lastMetrics = null;
 
         public void Start()
         {
@@ -59,7 +59,7 @@ namespace Ninjacrab.PersistentWindows.Common
 
         int GlobalWindowProcCallback(int code, IntPtr wParam, IntPtr lParam, ref bool callNext)
         {
-            CallWindowProcedureParam callbackParam = (CallWindowProcedureParam)Marshal.PtrToStructure(lParam, typeof(CallWindowProcedureParam));
+            CallWindowProcedureParam callbackParam = Marshal.PtrToStructure<CallWindowProcedureParam>(lParam);
             switch(callbackParam.message)
             {
                 case WindowsMessage.WINDOWPOSCHANGED:
@@ -120,11 +120,11 @@ namespace Ninjacrab.PersistentWindows.Common
         /// <param name="callbackParam"></param>
         private void WindowPositionChangedHandler(CallWindowProcedureParam callbackParam)
         {
-            ApplicationDisplayMetrics appMetrics = null;
+            ApplicationDisplayMetrics? appMetrics = null;
             if (monitorApplications == null ||
-                !monitorApplications.ContainsKey(lastMetrics.Key))
+                !monitorApplications.ContainsKey(lastMetrics!.Key))
             {
-                Log.Error("No definitions found for this resolution: {0}", lastMetrics.Key);
+                Log.Error("No definitions found for this resolution: {0}", lastMetrics!.Key);
                 return;
             }
 
@@ -146,13 +146,13 @@ namespace Ninjacrab.PersistentWindows.Common
                     Log.Error("Can't find hwnd {0}", callbackParam.hwnd.ToInt64());
                     return;
                 }
-                ApplicationDisplayMetrics applicationDisplayMetric = null;
+                ApplicationDisplayMetrics? applicationDisplayMetric = null;
                 AddOrUpdateWindow(lastMetrics.Key, newAppWindow, out applicationDisplayMetric);
                 return;
             }
 
             WindowPlacement windowPlacement = appMetrics.WindowPlacement;
-            WindowsPosition newPosition = (WindowsPosition)Marshal.PtrToStructure(callbackParam.lparam, typeof(WindowsPosition));
+            WindowsPosition newPosition = Marshal.PtrToStructure<WindowsPosition>(callbackParam.lparam);
             windowPlacement.NormalPosition.Left = newPosition.Left;
             windowPlacement.NormalPosition.Top = newPosition.Top;
             windowPlacement.NormalPosition.Right = newPosition.Left + newPosition.Width;
@@ -198,7 +198,7 @@ namespace Ninjacrab.PersistentWindows.Common
             thread.Start();
         }
 
-        private void CaptureApplicationsOnCurrentDisplays(string displayKey = null, bool initialCapture = false)
+        private void CaptureApplicationsOnCurrentDisplays(string? displayKey = null, bool initialCapture = false)
         {            
             lock(displayChangeLock)
             {
@@ -226,7 +226,7 @@ namespace Ninjacrab.PersistentWindows.Common
                 List<ApplicationDisplayMetrics> apps = new List<ApplicationDisplayMetrics>();
                 foreach (var window in appWindows)
                 {
-                    ApplicationDisplayMetrics applicationDisplayMetric = null;
+                    ApplicationDisplayMetrics? applicationDisplayMetric = null;
                     bool addToChangeLog = AddOrUpdateWindow(displayKey, window, out applicationDisplayMetric);
 
                     if (addToChangeLog)
@@ -295,18 +295,16 @@ namespace Ninjacrab.PersistentWindows.Common
                 pos.Height = (int)((double)pos.Height / dpi * NATIVE_DPI);
                 windowPlacement.NormalPosition = (RECT)pos;
             }
-                       
-            applicationDisplayMetric = new ApplicationDisplayMetrics
+
+            applicationDisplayMetric = new ApplicationDisplayMetrics(
+#if DEBUG
+                // Fetching these is super CPU intensive so do it on debug builds only
+                window.Process.Id, window.Process.ProcessName)
+#else
+                0, "...")
+#endif
             {
                 HWnd = window.HWnd,
-                // Fetching these is super CPU intensive so do it on debug builds only
-#if DEBUG
-                ApplicationName = window.Process.ProcessName,
-                ProcessId = window.Process.Id,
-#else
-                ApplicationName = "...",
-                ProcessId = 0,
-#endif
                 WindowPlacement = windowPlacement
             };
 
@@ -340,7 +338,7 @@ namespace Ninjacrab.PersistentWindows.Common
             thread.Start();
         }
 
-        private void RestoreApplicationsOnCurrentDisplays(string displayKey = null)
+        private void RestoreApplicationsOnCurrentDisplays(string? displayKey = null)
         {
             lock (displayChangeLock)
             {

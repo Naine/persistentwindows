@@ -8,40 +8,22 @@ namespace Ninjacrab.PersistentWindows.Common.Models
     {
         public static DesktopDisplayMetrics AcquireMetrics()
         {
-            DesktopDisplayMetrics metrics = new DesktopDisplayMetrics();
-
-            var displays = Display.GetDisplays();
-            int displayId = 0;
-            foreach (var display in displays)
-            {
-                metrics.SetMonitor(displayId++, display);
-            }
-            return metrics;
+            return new DesktopDisplayMetrics(Display.GetDisplays());
         }
 
-        private Dictionary<int, Display> monitorResolutions = new Dictionary<int, Display>();
+        private readonly List<Display> monitorResolutions;
 
         public int NumberOfDisplays { get { return monitorResolutions.Count; } }
 
-        public void SetMonitor(int id, Display display)
+        public DesktopDisplayMetrics(List<Display> displays)
         {
-            if (!monitorResolutions.ContainsKey(id) ||
-                monitorResolutions[id].ScreenWidth != display.ScreenWidth ||
-                monitorResolutions[id].ScreenHeight != display.ScreenHeight)
+            monitorResolutions = displays;
+            List<string> segments = new List<string>();
+            foreach (var m in monitorResolutions.OrderBy(row => row.DeviceName))
             {
-                monitorResolutions.Add(id, display);
-                BuildKey();
+                segments.Add($"[DeviceName:{m.DeviceName} Loc:{m.Left}x{m.Top} Res:{m.ScreenWidth}x{m.ScreenHeight}]");
             }
-        }
-
-        private void BuildKey()
-        {
-            List<string> keySegments = new List<string>();
-            foreach (var entry in monitorResolutions.OrderBy(row => row.Value.DeviceName))
-            {
-                keySegments.Add(string.Format("[DeviceName:{0} Loc:{1}x{2} Res:{3}x{4}]", entry.Value.DeviceName, entry.Value.Left, entry.Value.Top, entry.Value.ScreenWidth, entry.Value.ScreenHeight));
-            }
-            key = string.Join(",", keySegments);
+            key = string.Join(",", segments);
         }
 
         private string key;
@@ -53,14 +35,9 @@ namespace Ninjacrab.PersistentWindows.Common.Models
             }
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            var other = obj as DesktopDisplayMetrics;
-            if (other == null)
-            {
-                return false;
-            }
-            return this.Key == other.key;
+            return obj is DesktopDisplayMetrics other && Key == other.key;
         }
 
         public override int GetHashCode()

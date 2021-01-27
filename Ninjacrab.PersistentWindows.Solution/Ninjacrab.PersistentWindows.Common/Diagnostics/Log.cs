@@ -37,28 +37,16 @@ namespace Ninjacrab.PersistentWindows.Common.Diagnostics
         /// <summary>
         /// Occurs when something is logged. STATIC EVENT!
         /// </summary>
-        public static event Action<LogLevel, string> LogEvent;
+        public static event Action<LogLevel, string>? LogEvent;
 
-        private static Logger _logger; 
+        private static Logger? _logger;
         private static Logger Logger
-        {
-            get
-            {
-                if(_logger == null)
-                {
-                    _logger = LogManager.GetLogger("Logger");
-                }
-                return _logger;
-            }
-        }
+            => _logger ??= LogManager.GetLogger("Logger");
 
         private static void RaiseLogEvent(LogLevel level, string message)
         {
             // could, should, would write a new logging target but this is brute force faster
-            if(LogEvent != null)
-            {
-                LogEvent(level, message);
-            }
+            LogEvent?.Invoke(level, message);
         }
 
         public static void Trace(string format, params object[] args)
