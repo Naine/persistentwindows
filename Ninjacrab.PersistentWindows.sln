@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30907.101
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ninjacrab.PersistentWindows", "Ninjacrab.PersistentWindows.csproj", "{A728279C-F567-4E54-8BC6-90A66DC3EF57}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A728279C-F567-4E54-8BC6-90A66DC3EF57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A728279C-F567-4E54-8BC6-90A66DC3EF57}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A728279C-F567-4E54-8BC6-90A66DC3EF57}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A728279C-F567-4E54-8BC6-90A66DC3EF57}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {096B5659-2AAC-41B7-AAFB-68C9A4675E6A}
+	EndGlobalSection
+EndGlobal
