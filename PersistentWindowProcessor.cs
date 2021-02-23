@@ -25,9 +25,11 @@ namespace Ninjacrab.PersistentWindows
             lastMetrics = DesktopDisplayMetrics.AcquireMetrics();
             CaptureApplicationsOnCurrentDisplays(initialCapture: true);
 
-            var thread = new Thread(InternalRun);
-            thread.IsBackground = true;
-            thread.Name = "PersistentWindowProcessor.InternalRun()";
+            var thread = new Thread(InternalRun)
+            {
+                IsBackground = true,
+                Name = "PersistentWindowProcessor.InternalRun()"
+            };
             thread.Start();
 
             SystemEvents.DisplaySettingsChanged += (s, e) =>
@@ -52,12 +54,12 @@ namespace Ninjacrab.PersistentWindows
             };
         }
 
-        private readonly Dictionary<string, SortedDictionary<string, ApplicationDisplayMetrics>> monitorApplications = new Dictionary<string, SortedDictionary<string, ApplicationDisplayMetrics>>();
+        private readonly Dictionary<string, SortedDictionary<string, ApplicationDisplayMetrics>> monitorApplications = new();
         private readonly object displayChangeLock = new object();
 
         private void InternalRun()
         {
-            while(true)
+            while (true)
             {
                 CaptureApplicationsOnCurrentDisplays();
                 Thread.Sleep(1000);
@@ -66,9 +68,11 @@ namespace Ninjacrab.PersistentWindows
 
         private void BeginCaptureApplicationsOnCurrentDisplays()
         {
-            var thread = new Thread(() => CaptureApplicationsOnCurrentDisplays());
-            thread.IsBackground = true;
-            thread.Name = "PersistentWindowProcessor.BeginCaptureApplicationsOnCurrentDisplays()";
+            var thread = new Thread(() => CaptureApplicationsOnCurrentDisplays())
+            {
+                IsBackground = true,
+                Name = "PersistentWindowProcessor.BeginCaptureApplicationsOnCurrentDisplays()"
+            };
             thread.Start();
         }
 
@@ -100,21 +104,14 @@ namespace Ninjacrab.PersistentWindows
                 List<ApplicationDisplayMetrics> apps = new List<ApplicationDisplayMetrics>();
                 foreach (var window in appWindows)
                 {
-                    ApplicationDisplayMetrics? applicationDisplayMetric = null;
-                    bool addToChangeLog = AddOrUpdateWindow(displayKey, window, out applicationDisplayMetric);
+                    bool addToChangeLog = AddOrUpdateWindow(displayKey, window, out var metric);
 
                     if (addToChangeLog)
                     {
-                        apps.Add(applicationDisplayMetric);
-                        changeLog.Add(string.Format("CAOCD - Capturing {0,-45} at [{1,4}x{2,4}] size [{3,4}x{4,4}] V:{5} {6} ",
-                            applicationDisplayMetric,
-                            applicationDisplayMetric.WindowPlacement.NormalPosition.Left,
-                            applicationDisplayMetric.WindowPlacement.NormalPosition.Top,
-                            applicationDisplayMetric.WindowPlacement.NormalPosition.Width(),
-                            applicationDisplayMetric.WindowPlacement.NormalPosition.Height(),
-                            window.Visible,
-                            window.Title
-                            ));
+                        apps.Add(metric);
+                        var pos = metric.WindowPlacement.NormalPosition;
+                        changeLog.Add($"CAOCD - Capturing {metric,-45} at [{pos.Left,4}x{pos.Top,4}]"
+                            + $" size [{pos.Width(),4}x{pos.Height(),4}] V:{window.Visible} {window.Title} ");
                     #if DEBUG
                         Log.Info(changeLog.Last());
                     #endif
@@ -122,11 +119,9 @@ namespace Ninjacrab.PersistentWindows
                 }
 
                 // only save the updated if it didn't seem like something moved everything
-                if ((apps.Count > 0 
-                    && apps.Count < AppsMovedThreshold) 
-                    || initialCapture)
+                if ((apps.Count > 0 && apps.Count < AppsMovedThreshold) || initialCapture)
                 {
-                    foreach(var app in apps)
+                    foreach (var app in apps)
                     {
                         if (!monitorApplications[displayKey].ContainsKey(app.Key))
                         {
@@ -138,13 +133,13 @@ namespace Ninjacrab.PersistentWindows
                         }
                     }
                     changeLog.Sort();
-                    Log.Info("{0}Capturing applications for {1}", initialCapture ? "Initial " : "", displayKey);
-                    Log.Trace("{0} windows recorded{1}{2}", apps.Count, Environment.NewLine, string.Join(Environment.NewLine, changeLog));
+                    Log.Info($"{(initialCapture ? "Initial " : "")}Capturing applications for {displayKey}");
+                    Log.Trace($"{apps.Count} windows recorded{Environment.NewLine}{string.Join(Environment.NewLine, changeLog)}");
                 }
             }
         }
 
-        private IEnumerable<SystemWindow> CaptureWindowsOfInterest()
+        private static IEnumerable<SystemWindow> CaptureWindowsOfInterest()
         {
             return SystemWindow.AllToplevelWindows
                                 .Where(row => (nint)row.Parent.HWnd.Value == 0
@@ -196,19 +191,21 @@ namespace Ninjacrab.PersistentWindows
 
         public void BeginRestoreApplicationsOnCurrentDisplays()
         {
-            var thread = new Thread(() => 
+            var thread = new Thread(() =>
             {
                 try
                 {
                     RestoreApplicationsOnCurrentDisplays();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Log.Error(ex.ToString());
                 }
-            });
-            thread.IsBackground = true;
-            thread.Name = "PersistentWindowProcessor.RestoreApplicationsOnCurrentDisplays()";
+            })
+            {
+                IsBackground = true,
+                Name = "PersistentWindowProcessor.RestoreApplicationsOnCurrentDisplays()"
+            };
             thread.Start();
         }
 
@@ -226,12 +223,12 @@ namespace Ninjacrab.PersistentWindows
                 if (!monitorApplications.ContainsKey(displayKey))
                 {
                     // no old profile, we're done
-                    Log.Info("No old profile found for {0}", displayKey);
+                    Log.Info($"No old profile found for {displayKey}");
                     CaptureApplicationsOnCurrentDisplays(initialCapture: true);
                     return;
                 }
 
-                Log.Info("Restoring applications for {0}", displayKey);
+                Log.Info($"Restoring applications for {displayKey}");
                 foreach (var window in CaptureWindowsOfInterest())
                 {
                     string applicationKey = window.HWnd.Value.ToString();
@@ -252,16 +249,12 @@ namespace Ninjacrab.PersistentWindows
                         var success = Interop.SetWindowPlacement(monitorApplications[displayKey][applicationKey].HWnd, &windowPlacement);
                         if(!success)
                         {
-                            string error = new Win32Exception(Marshal.GetLastWin32Error()).Message;
-                            Log.Error(error);
+                            Log.Error(new Win32Exception(Marshal.GetLastWin32Error()).Message);
                         }
-                        Log.Info("SetWindowPlacement({0} [{1}x{2}]-[{3}x{4}]) - {5}",
-                            window.Process.ProcessName,
-                            windowPlacement.NormalPosition.Left,
-                            windowPlacement.NormalPosition.Top,
-                            windowPlacement.NormalPosition.Width(),
-                            windowPlacement.NormalPosition.Height(),
-                            success);
+
+                        ref var pos = ref windowPlacement.NormalPosition;
+                        string pName = window.Process.ProcessName;
+                        Log.Info($"SetWindowPlacement({pName} [{pos.Left}x{pos.Top}]-[{pos.Width()}x{pos.Height()}]) - {success}");
                     }
                 }
             }

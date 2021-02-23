@@ -43,42 +43,22 @@ namespace Ninjacrab.PersistentWindows.Diagnostics
         private static Logger Logger
             => _logger ??= LogManager.GetLogger("Logger");
 
-        private static void RaiseLogEvent(LogLevel level, string message)
+        public static void Trace(string message)
         {
-            // could, should, would write a new logging target but this is brute force faster
-            LogEvent?.Invoke(level, message);
-        }
-
-        public static void Trace(string format, params object[] args)
-        {
-            var message = Format(format, args);
             Logger.Trace(message);
-            RaiseLogEvent(LogLevel.Trace, message);
+            LogEvent?.Invoke(LogLevel.Trace, message);
         }
 
-        public static void Info(string format, params object[] args)
+        public static void Info(string message)
         {
-            var message = Format(format, args);
             Logger.Info(message);
-            RaiseLogEvent(LogLevel.Info, message);
+            LogEvent?.Invoke(LogLevel.Info, message);
         }
 
-        public static void Error(string format, params object[] args)
+        public static void Error(string message)
         {
-            var message = Format(format, args);
             Logger.Error(message);
-            RaiseLogEvent(LogLevel.Error, message);
-        }
-
-        /// <summary>
-        /// Since string.Format doesn't like args being null or having no entries.
-        /// </summary>
-        /// <param name="format">The format.</param>
-        /// <param name="args">The args.</param>
-        /// <returns></returns>
-        private static string Format(string format, params object[] args)
-        {
-            return args == null || args.Length == 0 ? format : string.Format(format, args);
+            LogEvent?.Invoke(LogLevel.Error, message);
         }
     }
 }
