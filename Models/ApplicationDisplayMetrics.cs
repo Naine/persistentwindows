@@ -3,12 +3,12 @@ using Ninjacrab.PersistentWindows.WinApiBridge;
 
 namespace Ninjacrab.PersistentWindows.Models
 {
-    public class ApplicationDisplayMetrics
+    internal class ApplicationDisplayMetrics
     {
-        public IntPtr HWnd { get; set; }
+        public HWND HWnd { get; set; }
         public int ProcessId { get; set; }
         public string ApplicationName { get; set; }
-        public WindowPlacement WindowPlacement { get; set; }
+        public WINDOWPLACEMENT WindowPlacement { get; set; }
 
         public ApplicationDisplayMetrics(int id, string name)
         {
@@ -17,17 +17,17 @@ namespace Ninjacrab.PersistentWindows.Models
         }
 
         public string Key
-            => $"{HWnd.ToInt64()}";
+            => $"{HWnd.Value}";
 
         public bool EqualPlacement(ApplicationDisplayMetrics other)
         {
-            return this.WindowPlacement.NormalPosition.Left == other.WindowPlacement.NormalPosition.Left
-                && this.WindowPlacement.NormalPosition.Top == other.WindowPlacement.NormalPosition.Top
-                && this.WindowPlacement.NormalPosition.Width == other.WindowPlacement.NormalPosition.Width
-                && this.WindowPlacement.NormalPosition.Height == other.WindowPlacement.NormalPosition.Height;
+            return WindowPlacement.NormalPosition.Left == other.WindowPlacement.NormalPosition.Left
+                && WindowPlacement.NormalPosition.Top == other.WindowPlacement.NormalPosition.Top
+                && WindowPlacement.NormalPosition.Right == other.WindowPlacement.NormalPosition.Right
+                && WindowPlacement.NormalPosition.Bottom == other.WindowPlacement.NormalPosition.Bottom;
         }
 
         public override string ToString()
-            => $"{ProcessId}.{HWnd.ToInt64()} {ApplicationName}";
+            => $"{ProcessId}.{HWnd.Value} {ApplicationName}";
     }
 }

@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Ninjacrab.PersistentWindows.WinApiBridge;
 
 namespace Ninjacrab.PersistentWindows.Models
@@ -13,12 +15,14 @@ namespace Ninjacrab.PersistentWindows.Models
 
         public DesktopDisplayMetrics(List<Display> displays)
         {
-            List<string> segments = new List<string>();
-            foreach (var m in displays.OrderBy(row => row.DeviceName))
+            var sb = new StringBuilder();
+            foreach (var m in displays.OrderBy(row => (((ulong)(uint)row.Left) << 32) | (uint)row.Top))
             {
-                segments.Add($"[DeviceName:{m.DeviceName} Loc:{m.Left}x{m.Top} Res:{m.ScreenWidth}x{m.ScreenHeight}]");
+                if (sb.Length == 0) sb.Append(',');
+                sb.Append("[Loc:").Append(m.Left).Append('x').Append(m.Top).Append(" Res:")
+                    .Append(m.ScreenWidth).Append('x').Append(m.ScreenHeight).Append(']');
             }
-            Key = string.Join(",", segments);
+            Key = sb.ToString();
         }
 
         public string Key { get; }

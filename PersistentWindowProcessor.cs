@@ -14,7 +14,7 @@ namespace Ninjacrab.PersistentWindows
 {
     public class PersistentWindowProcessor
     {
-        private const double NATIVE_DPI = 96.0;
+        private const double NATIVE_DPI = 96;
 
         // read and update this from a config file eventually
         private const int AppsMovedThreshold = 4;
@@ -110,8 +110,8 @@ namespace Ninjacrab.PersistentWindows
                             applicationDisplayMetric,
                             applicationDisplayMetric.WindowPlacement.NormalPosition.Left,
                             applicationDisplayMetric.WindowPlacement.NormalPosition.Top,
-                            applicationDisplayMetric.WindowPlacement.NormalPosition.Width,
-                            applicationDisplayMetric.WindowPlacement.NormalPosition.Height,
+                            applicationDisplayMetric.WindowPlacement.NormalPosition.Width(),
+                            applicationDisplayMetric.WindowPlacement.NormalPosition.Height(),
                             window.Visible,
                             window.Title
                             ));
@@ -147,27 +147,30 @@ namespace Ninjacrab.PersistentWindows
         private IEnumerable<SystemWindow> CaptureWindowsOfInterest()
         {
             return SystemWindow.AllToplevelWindows
-                                .Where(row => row.Parent.HWnd.ToInt64() == 0
+                                .Where(row => (nint)row.Parent.HWnd.Value == 0
                                     && !string.IsNullOrEmpty(row.Title)
                                     && !row.Title.Equals("Program Manager")
                                     && row.Visible);
         }
 
-        private bool AddOrUpdateWindow(string displayKey, SystemWindow window, out ApplicationDisplayMetrics applicationDisplayMetric)
-        {
-            WindowPlacement windowPlacement = new WindowPlacement();
-            User32.GetWindowPlacement(window.HWnd, ref windowPlacement);
+        private const uint SW_SHOWNORMAL = 1;
+        private const uint SW_MAXIMIZE = 3;
 
-            if (windowPlacement.ShowCmd == ShowWindowCommands.Normal)
+        private unsafe bool AddOrUpdateWindow(string displayKey, SystemWindow window, out ApplicationDisplayMetrics applicationDisplayMetric)
+        {
+            WINDOWPLACEMENT windowPlacement;
+            windowPlacement.Length = (uint)sizeof(WINDOWPLACEMENT);
+            Interop.GetWindowPlacement(window.HWnd, &windowPlacement);
+
+            if (windowPlacement.ShowCmd == SW_SHOWNORMAL)
             {
-                User32.GetWindowRect(window.HWnd, ref windowPlacement.NormalPosition);
+                Interop.GetWindowRect(window.HWnd, &windowPlacement.NormalPosition);
                 
                 // Undo windows scale factor in window size or we end up inflating the size of windows
-                double dpi = (double)User32.GetDpiForWindow(window.HWnd);
-                Rectangle pos = windowPlacement.NormalPosition.ToRectangle();
-                pos.Width = (int)((double)pos.Width / dpi * NATIVE_DPI);
-                pos.Height = (int)((double)pos.Height / dpi * NATIVE_DPI);
-                windowPlacement.NormalPosition = (RECT)pos;
+                double dpi = Interop.GetDpiForWindow(window.HWnd);
+                ref var pos = ref windowPlacement.NormalPosition;
+                pos.Right = pos.Left + (int)((pos.Right - pos.Left) / dpi * NATIVE_DPI);
+                pos.Bottom = pos.Top + (int)((pos.Bottom - pos.Top) / dpi * NATIVE_DPI);
             }
 
             applicationDisplayMetric = new ApplicationDisplayMetrics(
@@ -209,7 +212,7 @@ namespace Ninjacrab.PersistentWindows
             thread.Start();
         }
 
-        private void RestoreApplicationsOnCurrentDisplays(string? displayKey = null)
+        private unsafe void RestoreApplicationsOnCurrentDisplays(string? displayKey = null)
         {
             lock (displayChangeLock)
             {
@@ -231,22 +234,22 @@ namespace Ninjacrab.PersistentWindows
                 Log.Info("Restoring applications for {0}", displayKey);
                 foreach (var window in CaptureWindowsOfInterest())
                 {
-                    string applicationKey = window.HWnd.ToInt64().ToString();
+                    string applicationKey = window.HWnd.Value.ToString();
                     if (monitorApplications[displayKey].ContainsKey(applicationKey))
                     {
                         // looks like the window is still here for us to restore
-                        WindowPlacement windowPlacement = monitorApplications[displayKey][applicationKey].WindowPlacement;
+                        WINDOWPLACEMENT windowPlacement = monitorApplications[displayKey][applicationKey].WindowPlacement;
 
-                        if (windowPlacement.ShowCmd == ShowWindowCommands.Maximize)
+                        if (windowPlacement.ShowCmd == SW_MAXIMIZE)
                         {
                             // When restoring maximized windows, it occasionally switches res and when the maximized setting is restored
                             // the window thinks it's maxxed, but does not eat all the real estate. So we'll temporarily unmaximize then
                             // re-apply that
-                            windowPlacement.ShowCmd = ShowWindowCommands.Normal;
-                            User32.SetWindowPlacement(monitorApplications[displayKey][applicationKey].HWnd, ref windowPlacement);
-                            windowPlacement.ShowCmd = ShowWindowCommands.Maximize;
+                            windowPlacement.ShowCmd = SW_SHOWNORMAL;
+                            Interop.SetWindowPlacement(monitorApplications[displayKey][applicationKey].HWnd, &windowPlacement);
+                            windowPlacement.ShowCmd = SW_MAXIMIZE;
                         }
-                        var success = User32.SetWindowPlacement(monitorApplications[displayKey][applicationKey].HWnd, ref windowPlacement);
+                        var success = Interop.SetWindowPlacement(monitorApplications[displayKey][applicationKey].HWnd, &windowPlacement);
                         if(!success)
                         {
                             string error = new Win32Exception(Marshal.GetLastWin32Error()).Message;
@@ -256,8 +259,8 @@ namespace Ninjacrab.PersistentWindows
                             window.Process.ProcessName,
                             windowPlacement.NormalPosition.Left,
                             windowPlacement.NormalPosition.Top,
-                            windowPlacement.NormalPosition.Width,
-                            windowPlacement.NormalPosition.Height,
+                            windowPlacement.NormalPosition.Width(),
+                            windowPlacement.NormalPosition.Height(),
                             success);
                     }
                 }

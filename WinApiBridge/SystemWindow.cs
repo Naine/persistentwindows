@@ -2,130 +2,76 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Ninjacrab.PersistentWindows.WinApiBridge
 {
-    public class SystemWindow
+    internal readonly struct SystemWindow
     {
-        private delegate int EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
-
-        private enum BOOL : int
-        {
-            FALSE = 0,
-        }
-
-        [DllImport("user32.dll")]
-        private static extern BOOL EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
-        private static extern IntPtr GetParent(IntPtr hWnd);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern int GetWindowTextLength(IntPtr hWnd);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern int GetWindowText(IntPtr hWnd, [Out] StringBuilder lpString, int nMaxCount);
-
-        [DllImport("user32.dll")]
-        private static extern BOOL SetWindowText(IntPtr hWnd, string lpString);
-
-        [DllImport("user32.dll")]
-        private static extern BOOL IsWindowVisible(IntPtr hWnd);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern int GetWindowThreadProcessId(IntPtr hWnd, out int lpdwProcessId);
-
         public static List<SystemWindow> AllToplevelWindows
         {
             get
             {
                 var wnds = new List<SystemWindow>();
-                EnumWindows((hwnd, _) =>
+                Interop.EnumWindows((hWnd, _) =>
                 {
-                    wnds.Add(new SystemWindow(hwnd));
-                    return 1;
-                }, IntPtr.Zero);
+                    wnds.Add(new SystemWindow(hWnd));
+                    return true;
+                }, 0);
                 return wnds;
             }
         }
 
-        public IntPtr HWnd { get; }
+        public HWND HWnd { get; }
 
-        public SystemWindow(IntPtr HWnd)
+        public SystemWindow(HWND HWnd)
         {
             this.HWnd = HWnd;
         }
 
         public SystemWindow Parent
-            => new SystemWindow(GetParent(HWnd));
+            => new SystemWindow(Interop.GetParent(HWnd));
 
-        public Process Process
+        public unsafe Process Process
         {
             get
             {
-                GetWindowThreadProcessId(HWnd, out var pid);
+                int pid;
+                _ = Interop.GetWindowThreadProcessId(HWnd, (uint*)&pid);
                 return Process.GetProcessById(pid);
             }
         }
 
-        public string Title
+        public unsafe string Title
         {
+            [MethodImpl(MethodImplOptions.NoInlining)]
             get
             {
-                var sb = new StringBuilder(GetWindowTextLength(HWnd) + 1);
-                GetWindowText(HWnd, sb, sb.Capacity);
-                return sb.ToString();
+                int len = Interop.GetWindowTextLengthW(HWnd) + 1;
+                if (len > 1)
+                {
+                    fixed (char* pbuffer = len <= 64 ? stackalloc char[len] : new char[len])
+                    {
+                        if ((len = Interop.GetWindowTextW(HWnd, pbuffer, len)) > 0)
+                        {
+                            return new string(pbuffer, 0, len);
+                        }
+                    }
+                }
+                return string.Empty;
             }
             set
             {
-                SetWindowText(HWnd, value);
+                fixed (char* p = value)
+                {
+                    Interop.SetWindowTextW(HWnd, p);
+                }
             }
         }
 
         public bool Visible
-            => IsWindowVisible(HWnd) != BOOL.FALSE;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct POINT
-    {
-        public int X;
-        public int Y;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct RECT
-    {
-        public int Left;
-
-        public int Top;
-
-        public int Right;
-
-        public int Bottom;
-
-        public int Height
-            => Bottom - Top;
-
-        public int Width
-            => Right - Left;
-
-        public Rectangle ToRectangle()
-        {
-            return Rectangle.FromLTRB(Left, Top, Right, Bottom);
-        }
-
-        public static explicit operator RECT(Rectangle rect)
-        {
-            return new RECT
-            {
-                Left = rect.Left,
-                Top = rect.Top,
-                Right = rect.Right,
-                Bottom = rect.Bottom,
-            };
-        }
+            => Interop.IsWindowVisible(HWnd);
     }
 }
